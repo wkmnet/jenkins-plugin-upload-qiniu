@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+    该插件用于上传本地文件到七牛云服务器，并将链接地址存入指定位置。
+</div>
