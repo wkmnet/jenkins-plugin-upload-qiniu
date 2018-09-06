@@ -11,6 +11,7 @@
 package org.wukm.jenkins;
 
 import com.google.gson.Gson;
+import com.qiniu.common.QiniuException;
 import com.qiniu.common.Zone;
 import com.qiniu.http.Response;
 import com.qiniu.storage.Configuration;
@@ -97,6 +98,8 @@ public class FileUploadRecorder extends Recorder {
         Map<String, String> envVars = build.getEnvironment(listener);
         final boolean buildFailed = build.getResult() == Result.FAILURE;
         logger.println("upload file to qi niu ...");
+        String systemName = launcher.isUnix() ? "Unix" : "Other";
+        logger.println("system name : " + systemName);
         for (FileUploadEntry entry : this.uploadEntries) {
             //对可输入内容字段进行变量替换
             String source = Util.replaceMacro(entry.getSource(), envVars);
@@ -144,64 +147,52 @@ public class FileUploadRecorder extends Recorder {
             FilePath[] paths = ws.list(source);
             for (FilePath path : paths) {
                 String fullPath = path.getRemote();
-//                String keyPath = path.getRemote().replace(wsPath, "");
-//                String key = keyPath.replace(File.separator, "/");
                 String name = path.getName();
 
                 if (!StringUtils.isNullOrEmpty(prefix)) {
                     name = prefix + name;
                 }
-
                 try {
                     int insertOnley = entry.isNoUploadOnExists() ? 1 : 0;
                     //上传策略。同名文件不允许再次上传。 文件相同，名字相同，返回上传成功。文件不同，名字相同，返回上传失败提示文件已存在。
                     StringMap putPolicy = new StringMap();
                     putPolicy.put("insertOnly", insertOnley);
-
                     //简单上传，使用默认策略，只需要设置上传的空间名就可以了
                     String uploadToken = auth.uploadToken(bucket, name, 3600, putPolicy);
-
                     //调用put方法上传 文件路径，上传后保存文件名，token
                     Response res = uploadManager.put(fullPath, name, uploadToken);
-
                     //打印返回的信息
                     String bodyString = res.bodyString();
-
                     //默认body返回hash和key值
                     DefaultPutRet defaultPutRet = new Gson().fromJson(bodyString, DefaultPutRet.class);
-//                    String hashString = defaultPutRet.hash;
+                    logger.print("response-hash:" + defaultPutRet.hash);
+                    logger.print("response-key:" + defaultPutRet.key);
                     //获得文件保存在空间中的资源名。
                     String keyString = defaultPutRet.key;
-
                     logger.println("上传 " + fullPath + " 到 " + bucket + " 成功." + bodyString);
-
                     //生成下载链接
-                    netUrl = netUrl + keyString;
+                    netUrl = netUrl.endsWith("/")? netUrl : netUrl.concat("/") + keyString;
 
-                    logger.println("下载链接　" + netUrl);
+                    logger.println("download url : " + netUrl);
 
-                    try {
-                        if (!StringUtils.isNullOrEmpty(urlsFile)) {
-                            File urlsFile1 = new File(urlsFile);
-                            FileUtils.createFile(urlsFile1, logger);
+                    if (!StringUtils.isNullOrEmpty(urlsFile)) {
+                        File localUrlFile = new File(urlsFile);
+                        FileUtils.createFile(localUrlFile, logger);
 
-                            netUrl += FileUtils.LINE_SEPARATOR;
-                            FileUtils.writeFileFromString(urlsFile1, netUrl, true, logger);
-                        }
-                    } catch (Exception e) {
-                        logger.println("写入链接文件失败！ " + e.getMessage());
+                        netUrl += FileUtils.LINE_SEPARATOR;
+                        FileUtils.writeFileFromString(localUrlFile, netUrl, true, logger);
                     }
-
-                } catch (Exception e) {
+                    logger.println("上传到七牛成功...");
+                } catch (QiniuException e) {
                     logger.println("上传 " + fullPath + " 到 " + bucket + " 失败 ");
                     logger.println(e);
+                    logger.println(e.getMessage());
+                } finally {
                     build.setResult(Result.UNSTABLE);
+                    logger.println("完成上传:" + fullPath);
                 }
-
             }
         }
-        launcher.isUnix();
-        logger.println("上传到七牛成功...");
         return true;
     }
 
