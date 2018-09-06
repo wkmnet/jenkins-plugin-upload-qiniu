@@ -23,7 +23,7 @@ Jenkins插件--七牛云文件上传
 
 ### 已经编译文件下载
 
-[jenkins-plugin-upload-qinniu.hpi](jenkins-plugin-upload-qiniu-1.0.hpi)
+[jenkins-plugin-upload-qinniu.hpi](jenkins-plugin-upload-qiniu-1.0.hpi?raw=true)
 
 ### 下载源码手动编译
 1. 本地安装[maven](http://maven.apache.org/download.cgi),并配置环境变量
