@@ -153,10 +153,10 @@ public class FileUploadRecorder extends Recorder {
                     name = prefix + name;
                 }
                 try {
-                    int insertOnley = entry.isNoUploadOnExists() ? 1 : 0;
+                    int insertOnly = entry.isNoUploadOnExists() ? 1 : 0;
                     //上传策略。同名文件不允许再次上传。 文件相同，名字相同，返回上传成功。文件不同，名字相同，返回上传失败提示文件已存在。
                     StringMap putPolicy = new StringMap();
-                    putPolicy.put("insertOnly", insertOnley);
+                    putPolicy.put("insertOnly", insertOnly);
                     //简单上传，使用默认策略，只需要设置上传的空间名就可以了
                     String uploadToken = auth.uploadToken(bucket, name, 3600, putPolicy);
                     //调用put方法上传 文件路径，上传后保存文件名，token
