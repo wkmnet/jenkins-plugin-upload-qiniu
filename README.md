@@ -26,7 +26,13 @@ Jenkins插件--七牛云文件上传
 [jenkins-plugin-upload-qinniu.hpi](jenkins-plugin-upload-qiniu-1.0.hpi)
 
 ### 下载源码手动编译
+1. 本地安装[maven](http://maven.apache.org/download.cgi),并配置环境变量
+2. 下载项目源码
+```shell
+git clone https://github.com/wkmnet/jenkins-plugin-upload-qiniu.git
 ```
+3. 进入源码目录，并执行下面命令进行编译
+```shell
 mvn package -DskipTests
 ```
 
